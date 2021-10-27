@@ -13,3 +13,6 @@
 - Scene describes the combination of meshes in thousands given a project.
 - Camera is the virtual view from an angle giving out depth description. 
 - Creating a three.js project -> canvas-sketch webgl.js --new --template=three.
+- Create an output folder for .png -> stop server then run: canvas-sketch webgl.js --output=tmp/
+- Save the .png sequence from the web browser to temp -> CTRL + SHIFT + S.
+- Install FFMPEG to save .gif file then -> canvas-sketch-mp4 tmp/
