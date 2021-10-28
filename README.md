@@ -16,3 +16,9 @@
 - Create an output folder for .png -> stop server then run: canvas-sketch webgl.js --output=tmp/
 - Save the .png sequence from the web browser to temp -> CTRL + SHIFT + S.
 - Install FFMPEG to save .gif file then -> canvas-sketch-mp4 tmp/
+### Shaders
+- Evaluates pixels in an image to be reproduced in a new image output.
+- Create a shaders template -> canvas-sketch shaders.js --new --template=shader.
+- Live Reloads when coding: Add --hot flag -> canvas-sketch shader.js --hot.
+- Adding noise in shaders install -> glsl-noise from npm.
+- Create difference colors -> npm i glsl-hsl2rgb.
