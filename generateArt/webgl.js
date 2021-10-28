@@ -9,9 +9,10 @@ const random = require('canvas-sketch-util/random');
 const palettes = require('nice-color-palettes');
 const eases = require('eases');
 const BezierEasing = require('bezier-easing');
+const glslify = require('glslify');
 
 const settings = {
-  dimension: [512, 512],
+  dimensions: [512, 512],
   fps: 24,
   duration: 4,
   // Make the loop animated
@@ -29,7 +30,7 @@ const sketch = ({ context }) => {
   });
 
   // WebGL background color
-  renderer.setClearColor("hsl(0, 0%, 95%)", 1);
+  renderer.setClearColor("hsl(0, 0%, 100%)", 1);
 
   // Setup a camera
   const camera = new THREE.OrthographicCamera();
@@ -39,17 +40,51 @@ const sketch = ({ context }) => {
   const scene = new THREE.Scene();
 
   const palette = random.pick(palettes);
+
+  // Using Shaders from three.js
+  const fragmentShader = `
+  varying vec2  vUv;
+
+  uniform vec3 color;
+  
+  void main (){
+    gl_FragColor = vec4(vec3(color * vUv.x), 1.0);
+  }
+  `;
+
+  const vertexShader = glslify(`
+  varying vec2 vUv;
+
+  uniform float time;
+
+  #pragma glslify: noise = require('glsl-noise/simplex/4d');
+
+  void main (){
+    vUv = uv;
+    vec3 pos = position.xyz;
+    pos += normal * noise(vec4(position.xyz, time)) * 3.0;
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+    }
+  `);
   
   // Setup a geometry
   const box = new THREE.BoxGeometry(1, 1, 1);
+
+  //list of meshes
+  const meshes = [];
   
   // Setup a mesh with geometry + material
   for (let i = 0; i < 40; i++){
     const mesh = new THREE.Mesh(
       box,
       // Setup a material
-       new THREE.MeshStandardMaterial({
-        color: random.pick(palette),
+      new THREE.ShaderMaterial({
+        fragmentShader,
+        vertexShader,
+        uniforms: {
+          color: { value: new THREE.Color(random.pick(palette)) },
+          time: { value: 0 }
+        }
        }),
        );
     mesh.position.set(
@@ -65,6 +100,7 @@ const sketch = ({ context }) => {
     mesh.scale.multiplyScalar(0.5);
     
     scene.add(mesh);
+    meshes.push(mesh);
   }
 
   scene.add(new THREE.AmbientLight('hsl(0, 0%, 40%)'));
@@ -109,10 +145,14 @@ const sketch = ({ context }) => {
     },
 
     // Update & render your scene here
-    render({ playhead }) {
+    render({ playhead, time }) {
       const t = Math.sin(playhead * Math.PI);
       //scene.rotation.z = eases.expoInOut(t);
       scene.rotation.z = easeFn(t);
+
+      meshes.forEach(mesh => {
+        mesh.material.uniforms.time.value = time;
+      });
       renderer.render(scene, camera);
     },
     // Dispose of events & renderer for cleaner hot-reloading
